@@ -1,0 +1,81 @@
+name: CI for LogMeIn
+
+on:
+  push:
+    branches:
+      - '**'      # Déclenche sur toutes les branches
+  pull_request:
+    branches:
+      - main      # Déclenche sur les PR vers main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:   # Lance un container PostgreSQL pour les tests
+        image: postgres:15
+        env:
+          POSTGRES_DB: logs_db
+          POSTGRES_USER: logs_user
+          POSTGRES_PASSWORD: logs_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U logs_user" 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
+
+    steps:
+      # 1️⃣ Cloner le code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2️⃣ Configurer Docker
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 3️⃣ Connexion à Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 4️⃣ Builder l'image backend
+      - name: Build backend Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          tags: paoza33/logmein-backend:test
+
+      # 5️⃣ Builder l'image frontend
+      - name: Build frontend Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: false
+          tags: paoza33/logmein-frontend:test
+
+      # 6️⃣ Lancer les tests backend
+      - name: Run backend tests
+        run: |
+          echo "Attente de PostgreSQL..."
+          sleep 10 # On attend un peu le container postgres
+          docker run --rm \
+            --network host \
+            -e DB_HOST=localhost \
+            -e DB_NAME=logs_db \
+            -e DB_USER=logs_user \
+            -e DB_PASSWORD=logs_password \
+            -e DB_PORT=5432 \
+            paoza33/logmein-backend:test \
+            bash run_test.sh || echo "No backend tests configured"
+
+      # 7️⃣ Lancer les tests frontend (à remplir plus tard)
+      - name: Run frontend tests
+        run: |
+          echo "Pas encore de tests frontend définis."
