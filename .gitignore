@@ -1,0 +1,20 @@
+# === Fichiers Python à ignorer ===
+__pycache__/
+*.py[cod]
+*.pyo
+
+# === Environnements virtuels ===
+.env/
+venv/
+ENV/
+env/
+
+# === Fichiers de logs ===
+*.log
+
+# === Fichiers de configuration sensibles ===
+.env
+
+# === Autres fichiers inutiles ===
+.DS_Store
+*.swp
