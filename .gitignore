@@ -18,3 +18,5 @@ env/
 # === Autres fichiers inutiles ===
 .DS_Store
 *.swp
+Tuto.md
+Etape.md
